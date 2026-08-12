@@ -22,7 +22,7 @@ function run(argv) {
   fm.createDirectoryAtPathWithIntermediateDirectoriesAttributesError(dir + '/raw', true, $(), null);
   var session = {
     schemaVersion: '2.0', sessionId: id, createdAt: now.toISOString(), status: 'SYSTEM_COLLECTING', locale: locale,
-    skillVersion: '2.0.0', runtime: {host:'Local macOS host',hostOS:'macOS',mode:'DIRECT_HOST_EXEC'},
+    skillVersion: '2.0.1', runtime: {host:'Local macOS host',hostOS:'macOS',mode:'DIRECT_HOST_EXEC'},
     device: null, capabilities: {}, systemResults: [], interactivePlan: [], featureFlags: { riskChecks: false }
   };
   writeJSON(dir + '/session.json', session);
