@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mac-check.local/v2/facts.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "collectedAt", "source", "device", "battery", "security", "storage", "network", "peripherals", "limitations"],
+  "properties": {
+    "schemaVersion": { "const": "2.0" },
+    "collectedAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "required": ["accessLevel", "probes"],
+      "properties": {
+        "accessLevel": { "enum": ["FULL", "PARTIAL"] },
+        "probes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/probe" } }
+      },
+      "additionalProperties": false
+    },
+    "device": {
+      "type": "object",
+      "required": ["status", "modelName", "modelIdentifier", "architecture", "chip", "memoryBytes", "memoryDisplay", "macOSVersion", "buildVersion", "serialNumber", "serialMasked", "serialSourcesAvailable", "serialConsistency", "limitations"],
+      "properties": {
+        "status": { "$ref": "#/$defs/factStatus" },
+        "modelName": { "$ref": "#/$defs/nullableString" },
+        "modelIdentifier": { "$ref": "#/$defs/nullableString" },
+        "architecture": { "enum": ["APPLE_SILICON", "INTEL", "UNKNOWN"] },
+        "chip": { "$ref": "#/$defs/nullableString" },
+        "memoryBytes": { "$ref": "#/$defs/nullableNumber" },
+        "memoryDisplay": { "$ref": "#/$defs/nullableString" },
+        "macOSVersion": { "$ref": "#/$defs/nullableString" },
+        "buildVersion": { "$ref": "#/$defs/nullableString" },
+        "serialNumber": { "$ref": "#/$defs/nullableString" },
+        "serialMasked": { "$ref": "#/$defs/nullableString" },
+        "serialSourcesAvailable": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "serialConsistency": { "enum": ["MATCH", "MISMATCH", "SINGLE_SOURCE", "UNKNOWN"] },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      },
+      "additionalProperties": false
+    },
+    "battery": {
+      "type": "object",
+      "required": ["status", "supported", "cycleCount", "designCapacityMah", "fullChargeCapacityMah", "capacityRatio", "condition", "isCharging", "acConnected", "limitations"],
+      "properties": {
+        "status": { "$ref": "#/$defs/factStatus" },
+        "supported": { "type": ["boolean", "null"] },
+        "cycleCount": { "$ref": "#/$defs/nullableNumber" },
+        "designCapacityMah": { "$ref": "#/$defs/nullableNumber" },
+        "fullChargeCapacityMah": { "$ref": "#/$defs/nullableNumber" },
+        "capacityRatio": { "$ref": "#/$defs/nullableNumber" },
+        "condition": { "$ref": "#/$defs/nullableString" },
+        "isCharging": { "type": ["boolean", "null"] },
+        "acConnected": { "type": ["boolean", "null"] },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "type": "object",
+      "required": ["status", "mdmEnrolled", "adeEnrolled", "fileVault", "sip", "activationLock", "limitations"],
+      "properties": {
+        "status": { "$ref": "#/$defs/factStatus" },
+        "mdmEnrolled": { "type": ["boolean", "null"] },
+        "adeEnrolled": { "type": ["boolean", "null"] },
+        "fileVault": { "enum": ["ENABLED", "DISABLED", "UNKNOWN"] },
+        "sip": { "enum": ["ENABLED", "DISABLED", "UNKNOWN"] },
+        "activationLock": { "enum": ["ENABLED", "DISABLED", "UNKNOWN"] },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      },
+      "additionalProperties": false
+    },
+    "storage": {
+      "type": "object",
+      "required": ["status", "bootVolume", "deviceIdentifier", "fileSystem", "totalBytes", "freeBytes", "smartStatus", "solidState", "nvmeCount", "limitations"],
+      "properties": {
+        "status": { "$ref": "#/$defs/factStatus" },
+        "bootVolume": { "$ref": "#/$defs/nullableString" },
+        "deviceIdentifier": { "$ref": "#/$defs/nullableString" },
+        "fileSystem": { "$ref": "#/$defs/nullableString" },
+        "totalBytes": { "$ref": "#/$defs/nullableNumber" },
+        "freeBytes": { "$ref": "#/$defs/nullableNumber" },
+        "smartStatus": { "$ref": "#/$defs/nullableString" },
+        "solidState": { "type": ["boolean", "null"] },
+        "nvmeCount": { "type": "integer", "minimum": 0 },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      },
+      "additionalProperties": false
+    },
+    "network": {
+      "type": "object",
+      "required": ["status", "wifiController", "wifiPower", "wifiConnected", "bluetoothController", "bluetoothPower", "limitations"],
+      "properties": {
+        "status": { "$ref": "#/$defs/factStatus" },
+        "wifiController": { "type": ["boolean", "null"] },
+        "wifiPower": { "enum": ["ON", "OFF", "UNKNOWN"] },
+        "wifiConnected": { "type": ["boolean", "null"] },
+        "bluetoothController": { "type": ["boolean", "null"] },
+        "bluetoothPower": { "enum": ["ON", "OFF", "UNKNOWN"] },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      },
+      "additionalProperties": false
+    },
+    "peripherals": {
+      "type": "object",
+      "required": ["status", "usbCount", "thunderboltCount", "displayCount", "audioCount", "cameraCount", "limitations"],
+      "properties": {
+        "status": { "$ref": "#/$defs/factStatus" },
+        "usbCount": { "type": "integer", "minimum": 0 },
+        "thunderboltCount": { "type": "integer", "minimum": 0 },
+        "displayCount": { "type": "integer", "minimum": 0 },
+        "audioCount": { "type": "integer", "minimum": 0 },
+        "cameraCount": { "type": "integer", "minimum": 0 },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      },
+      "additionalProperties": false
+    },
+    "limitations": { "$ref": "#/$defs/stringArray" }
+  },
+  "$defs": {
+    "factStatus": { "enum": ["AVAILABLE", "UNKNOWN", "UNSUPPORTED"] },
+    "nullableString": { "type": ["string", "null"] },
+    "nullableNumber": { "type": ["number", "null"] },
+    "stringArray": { "type": "array", "items": { "type": "string" }, "maxItems": 64 },
+    "probe": {
+      "type": "object",
+      "required": ["id", "available", "status", "reason", "exitCode"],
+      "properties": {
+        "id": { "type": "string" },
+        "available": { "type": "boolean" },
+        "status": { "enum": ["OK", "EMPTY", "ERROR", "TIMEOUT", "SKIPPED"] },
+        "reason": { "type": "string" },
+        "exitCode": { "type": ["integer", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2.0",
+  "baseGroups": ["device", "battery", "security", "storage", "network", "peripherals"],
+  "hardwareOrder": ["keyboard", "display", "audio", "microphone", "camera", "touchid", "trackpad", "ports"],
+  "hardware": [
+    { "id": "keyboard", "titleKey": "nav.keyboard", "capability": "hasBuiltInKeyboard" },
+    { "id": "display", "titleKey": "nav.display", "capability": null },
+    { "id": "audio", "titleKey": "nav.audio", "capability": null },
+    { "id": "microphone", "titleKey": "nav.microphone", "capability": null },
+    { "id": "camera", "titleKey": "nav.camera", "capability": null },
+    { "id": "touchid", "titleKey": "nav.touchid", "capability": "hasTouchID" },
+    { "id": "trackpad", "titleKey": "nav.trackpad", "capability": "hasTrackpad" },
+    { "id": "ports", "titleKey": "nav.ports", "capability": null }
+  ]
+}

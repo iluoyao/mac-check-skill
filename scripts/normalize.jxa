@@ -1,0 +1,209 @@
+ObjC.import('Foundation');
+
+function readText(path) {
+  var data = $.NSData.dataWithContentsOfFile(path);
+  if (!data) return null;
+  return ObjC.unwrap($.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding));
+}
+function readJSON(path) {
+  var text = readText(path);
+  if (!text) return null;
+  try { return JSON.parse(text); } catch (_) { return null; }
+}
+function writeJSON(path, value) {
+  var ok = $(JSON.stringify(value, null, 2) + '\n').writeToFileAtomicallyEncodingError(path, true, $.NSUTF8StringEncoding, null);
+  if (!ok) throw new Error('Unable to write ' + path);
+}
+function first(value) { return Array.isArray(value) && value.length ? value[0] : null; }
+function nonempty(value) { return value === 0 || value === false || (value !== null && value !== undefined && String(value).trim() !== ''); }
+function pick(object, keys) {
+  if (!object) return null;
+  for (var i = 0; i < keys.length; i++) if (nonempty(object[keys[i]])) return object[keys[i]];
+  return null;
+}
+function deepFind(node, keyMatchers, seen) {
+  seen = seen || [];
+  if (!node || typeof node !== 'object') return null;
+  if (seen.indexOf(node) >= 0) return null;
+  seen.push(node);
+  var keys = Object.keys(node);
+  for (var i = 0; i < keys.length; i++) {
+    var normalized = keys[i].toLowerCase().replace(/[^a-z0-9]/g, '');
+    for (var j = 0; j < keyMatchers.length; j++) {
+      if (normalized === keyMatchers[j] && nonempty(node[keys[i]])) return node[keys[i]];
+    }
+  }
+  for (var k = 0; k < keys.length; k++) {
+    var result = deepFind(node[keys[k]], keyMatchers, seen);
+    if (nonempty(result)) return result;
+  }
+  return null;
+}
+function asNumber(value) {
+  if (typeof value === 'number') return isFinite(value) ? value : null;
+  if (!nonempty(value)) return null;
+  var parsed = Number(String(value).replace(/[^0-9.-]/g, ''));
+  return isFinite(parsed) ? parsed : null;
+}
+function firstNumber(values) {
+  for (var i = 0; i < values.length; i++) if (values[i] !== null) return values[i];
+  return null;
+}
+function bytesFromMemory(value) {
+  if (!nonempty(value)) return null;
+  var text = String(value); var n = parseFloat(text);
+  if (!isFinite(n)) return null;
+  if (/TB/i.test(text)) return n * 1099511627776;
+  if (/GB/i.test(text)) return n * 1073741824;
+  if (/MB/i.test(text)) return n * 1048576;
+  return n;
+}
+function boolValue(value) {
+  if (value === true || value === false) return value;
+  if (!nonempty(value)) return null;
+  var t = String(value).toLowerCase();
+  if (/^(yes|true|on|1|enabled|supported)$/.test(t)) return true;
+  if (/^(no|false|off|0|disabled|not supported)$/.test(t)) return false;
+  return null;
+}
+function maskSerial(serial) {
+  if (!nonempty(serial)) return null;
+  var s = String(serial).trim();
+  if (s.length <= 4) return '••••';
+  return s.slice(0, 3) + '••••' + s.slice(-3);
+}
+function regexValue(text, regex) { var m = text && text.match(regex); return m ? m[1].trim() : null; }
+function plistValue(text, key) {
+  if (!text) return null;
+  var escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var m = text.match(new RegExp('<key>' + escaped + '<\\/key>\\s*<(string|integer|real)>([\\s\\S]*?)<\\/\\1>', 'i'));
+  if (m) return m[2].replace(/&amp;/g, '&').trim();
+  if (new RegExp('<key>' + escaped + '<\\/key>\\s*<true\\s*\\/>', 'i').test(text)) return true;
+  if (new RegExp('<key>' + escaped + '<\\/key>\\s*<false\\s*\\/>', 'i').test(text)) return false;
+  return null;
+}
+function groupStatus(values, unsupported) {
+  if (unsupported) return 'UNSUPPORTED';
+  for (var i = 0; i < values.length; i++) if (nonempty(values[i])) return 'AVAILABLE';
+  return 'UNKNOWN';
+}
+function limitationsFor(probes, ids) {
+  var out = [];
+  for (var i = 0; i < ids.length; i++) {
+    var p = probes[ids[i]];
+    if (!p || p.status !== 'OK') out.push('probe.' + ids[i] + '.' + (p ? p.status.toLowerCase() : 'missing'));
+  }
+  return out;
+}
+function countItems(root, dataKey) {
+  if (!root) return 0;
+  var value = root[dataKey];
+  if (!Array.isArray(value)) return 0;
+  var count = 0;
+  function walk(node) {
+    if (!node || typeof node !== 'object') return;
+    if (nonempty(node._name) || nonempty(node.name)) count++;
+    var keys = Object.keys(node);
+    for (var i = 0; i < keys.length; i++) if (keys[i] === '_items' || Array.isArray(node[keys[i]])) {
+      var list = node[keys[i]];
+      if (Array.isArray(list)) for (var j = 0; j < list.length; j++) walk(list[j]);
+    }
+  }
+  for (var i = 0; i < value.length; i++) walk(value[i]);
+  return count || value.length;
+}
+
+function run(argv) {
+  if (!argv.length) throw new Error('session directory required');
+  var dir = argv[0], raw = dir + '/raw';
+  var fm = $.NSFileManager.defaultManager;
+  var names = ObjC.unwrap(fm.contentsOfDirectoryAtPathError(raw, null)) || [];
+  var probes = {};
+  for (var n = 0; n < names.length; n++) {
+    var fileName = ObjC.unwrap(names[n]);
+    if (/\.meta\.json$/.test(fileName)) {
+      var meta = readJSON(raw + '/' + fileName);
+      if (meta && meta.id) probes[meta.id] = meta;
+    }
+  }
+  var ids = ['hardware','software','power','storage','nvme','wifi','wifi-power','bluetooth','usb','thunderbolt','displays','audio','camera','platform','battery','diskutil','df','profiles','filevault','sip','sw-vers','architecture'];
+  for (var q = 0; q < ids.length; q++) if (!probes[ids[q]]) probes[ids[q]] = {id:ids[q],available:false,status:'SKIPPED',reason:'probe metadata missing',exitCode:null};
+
+  function json(id) { return readJSON(raw + '/' + id + '.out'); }
+  function text(id) { return readText(raw + '/' + id + '.out') || ''; }
+  var hardware = json('hardware') || {}, hw = first(hardware.SPHardwareDataType) || hardware.fixture || {};
+  var software = json('software') || {}, sw = first(software.SPSoftwareDataType) || software.fixture || {};
+  var power = json('power') || {}, batteryJson = json('battery') || {}, batteryText = text('battery');
+  var storage = json('storage') || {}, nvme = json('nvme') || {};
+  var wifi = json('wifi') || {}, bluetooth = json('bluetooth') || {};
+  var platformText = text('platform'), diskText = text('diskutil'), dfText = text('df');
+  var swText = text('sw-vers'), architectureText = text('architecture').trim();
+
+  var modelName = pick(hw, ['machine_name','model_name','_name']);
+  var modelIdentifier = pick(hw, ['machine_model','model_identifier']);
+  var chip = pick(hw, ['chip_type','cpu_type','current_processor_speed']);
+  var memoryDisplay = pick(hw, ['physical_memory','memory']);
+  var serialA = pick(hw, ['serial_number','serial_number_system']);
+  var serialB = regexValue(platformText, /"IOPlatformSerialNumber"\s*=\s*"([^"]+)"/);
+  var serialSources = [];
+  if (serialA) serialSources.push(String(serialA));
+  if (serialB) serialSources.push(String(serialB));
+  var serialConsistency = serialSources.length === 2 ? (serialSources[0] === serialSources[1] ? 'MATCH' : 'MISMATCH') : (serialSources.length === 1 ? 'SINGLE_SOURCE' : 'UNKNOWN');
+  var osVersion = pick(sw, ['os_version','system_version']) || regexValue(swText, /ProductVersion:\s*(.+)/);
+  var buildVersion = regexValue(swText, /BuildVersion:\s*(.+)/) || pick(sw, ['build_version','kernel_version']);
+  var arch = /arm64|apple/i.test(architectureText + ' ' + chip) ? 'APPLE_SILICON' : (/x86_64|intel/i.test(architectureText + ' ' + chip) ? 'INTEL' : 'UNKNOWN');
+  if (!modelName && !modelIdentifier && !chip && arch === 'UNKNOWN') throw new Error('Device identity unavailable: hardware and architecture probes produced no usable identity');
+
+  var cycle = firstNumber([asNumber(deepFind(power, ['cyclecount','sppowerbatterycyclecount'])),asNumber(deepFind(batteryJson, ['cyclecount'])),asNumber(regexValue(batteryText,/"CycleCount"\s*=\s*([0-9]+)/))]);
+  var design = firstNumber([asNumber(deepFind(power, ['designcapacity'])),asNumber(deepFind(batteryJson, ['designcapacity'])),asNumber(regexValue(batteryText,/"DesignCapacity"\s*=\s*([0-9]+)/))]);
+  var full = firstNumber([asNumber(deepFind(power, ['fullchargecapacity'])),asNumber(deepFind(batteryJson, ['applecurrentcapacity','maxcapacity'])),asNumber(regexValue(batteryText,/"AppleRawMaxCapacity"\s*=\s*([0-9]+)/))]);
+  var maximumPercent = asNumber(deepFind(power,['sppowerbatteryhealthmaximumcapacity']));
+  var condition = deepFind(power, ['condition','sppowerbatteryhealth']) || deepFind(batteryJson, ['batteryhealth']);
+  var batteryPresent = /macbook/i.test(String(modelName || '')) || nonempty(cycle) || nonempty(full);
+  var capacityRatio = design && full ? Math.round((full / design) * 1000) / 1000 : (maximumPercent!==null?maximumPercent/100:null);
+  var profilesText = text('profiles'), filevaultText = text('filevault'), sipText = text('sip');
+  var mdm = /MDM enrollment:\s*Yes/i.test(profilesText) ? true : (/MDM enrollment:\s*No/i.test(profilesText) ? false : null);
+  var ade = /Enrolled via DEP:\s*Yes|ADE enrollment:\s*Yes/i.test(profilesText) ? true : (/Enrolled via DEP:\s*No|ADE enrollment:\s*No/i.test(profilesText) ? false : null);
+  var fileVault = /FileVault is On/i.test(filevaultText) ? 'ENABLED' : (/FileVault is Off/i.test(filevaultText) ? 'DISABLED' : 'UNKNOWN');
+  var sip = /disabled/i.test(sipText) ? 'DISABLED' : (/enabled/i.test(sipText) ? 'ENABLED' : 'UNKNOWN');
+  var activationRaw = pick(hw, ['activation_lock_status','activationlockstatus']);
+  var activationLock = /disabled|off/i.test(String(activationRaw || '')) ? 'DISABLED' : (/enabled|on/i.test(String(activationRaw || '')) ? 'ENABLED' : 'UNKNOWN');
+
+  var dfLines=dfText.trim().split(/\r?\n/),dfParts=dfLines.length>1?dfLines[dfLines.length-1].trim().split(/\s+/):[];
+  var bootVolume = plistValue(diskText, 'VolumeName') || deepFind(storage, ['volumename','name']) || (dfParts.length>=6?dfParts.slice(5).join(' '):null);
+  var deviceIdentifier = plistValue(diskText, 'DeviceIdentifier') || deepFind(storage, ['deviceidentifier']) || deepFind(nvme,['bsdname']) || (dfParts.length>=6?dfParts[0]:null);
+  var fileSystem = plistValue(diskText, 'FilesystemType') || deepFind(storage, ['filesystem','filesystemtype']);
+  var totalBytes = asNumber(plistValue(diskText, 'TotalSize')) || asNumber(deepFind(storage, ['capacitybytes','capacity','totalsize'])) || asNumber(deepFind(nvme,['capacitybytes','capacity'])) || (dfParts.length>=6?asNumber(dfParts[1])*1024:null);
+  var freeBytes = asNumber(plistValue(diskText, 'FreeSpace')) || asNumber(deepFind(storage, ['freespace','available'])) || (dfParts.length>=6?asNumber(dfParts[3])*1024:null);
+  var smartStatus = plistValue(diskText, 'SMARTStatus') || deepFind(nvme, ['spnvmesmartstatus','smartstatus','spsmartstatus']);
+  var solidState = boolValue(plistValue(diskText, 'SolidState'));
+  var nvmeCount=countItems(nvme,'SPNVMeDataType');if(solidState===null&&nvmeCount>0)solidState=true;
+
+  var wifiSections=wifi.SPAirPortDataType,wifiController=probes.wifi.status==='OK'&&Array.isArray(wifiSections)&&wifiSections.some(function(x){return x&&Object.keys(x).length>0;})?true:null;
+  var wifiPowerText=text('wifi-power');
+  if(probes['wifi-power'].status==='OK'&&/failed|not authori[sz]ed|not permitted/i.test(wifiPowerText)){probes['wifi-power'].status='ERROR';probes['wifi-power'].reason='command returned an authorization error';}
+  var wifiPowerRaw = regexValue(wifiPowerText,/:\s*(On|Off)/i) || deepFind(wifi, ['spairportairportpowerstate','airportpowerstate','powerstate']);
+  var wifiPower = /off|disabled/i.test(String(wifiPowerRaw || '')) ? 'OFF' : (/on|enabled/i.test(String(wifiPowerRaw || '')) ? 'ON' : 'UNKNOWN');
+  var wifiConnectedRaw = deepFind(wifi, ['spairportstatusinformation','status']);
+  var wifiConnected = /connected|running/i.test(String(wifiConnectedRaw || '')) ? true : (/inactive|disconnected/i.test(String(wifiConnectedRaw||''))||wifiPower==='OFF'?false:null);
+  var bluetoothSections=bluetooth.SPBluetoothDataType,bluetoothController=probes.bluetooth.status==='OK'&&Array.isArray(bluetoothSections)&&bluetoothSections.some(function(x){return x&&Object.keys(x).length>0;})?true:null;
+  if(probes.bluetooth.status==='OK'&&bluetoothController===null){probes.bluetooth.status='EMPTY';probes.bluetooth.reason='reporter returned no controller data';}
+  var bluetoothPowerRaw = deepFind(bluetooth, ['controllerstate','spbluetoothcontrollerstate','powerstate']);
+  var bluetoothPower = /off|disabled/i.test(String(bluetoothPowerRaw || '')) ? 'OFF' : (/on|enabled/i.test(String(bluetoothPowerRaw || '')) ? 'ON' : 'UNKNOWN');
+
+  var allProbeKeys = Object.keys(probes), failed = 0;
+  for (var z = 0; z < allProbeKeys.length; z++) if (probes[allProbeKeys[z]].status !== 'OK') failed++;
+  var facts = {
+    schemaVersion:'2.0', collectedAt:new Date().toISOString(),
+    source:{accessLevel:failed ? 'PARTIAL' : 'FULL',probes:probes},
+    device:{status:'AVAILABLE',modelName:modelName ? String(modelName) : null,modelIdentifier:modelIdentifier ? String(modelIdentifier) : null,architecture:arch,chip:chip ? String(chip) : null,memoryBytes:bytesFromMemory(memoryDisplay),memoryDisplay:memoryDisplay ? String(memoryDisplay) : null,macOSVersion:osVersion ? String(osVersion) : null,buildVersion:buildVersion ? String(buildVersion) : null,serialNumber:(serialA || serialB) ? String(serialA || serialB) : null,serialMasked:maskSerial(serialA || serialB),serialSourcesAvailable:serialSources.length,serialConsistency:serialConsistency,limitations:limitationsFor(probes,['hardware','platform','software','sw-vers','architecture'])},
+    battery:{status:groupStatus([cycle,full,condition],!batteryPresent),supported:batteryPresent ? true : false,cycleCount:cycle,designCapacityMah:design,fullChargeCapacityMah:full,capacityRatio:capacityRatio,condition:condition ? String(condition) : null,isCharging:boolValue(deepFind(batteryJson,['ischarging']))!==null?boolValue(deepFind(batteryJson,['ischarging'])):boolValue(regexValue(batteryText,/"IsCharging"\s*=\s*(Yes|No|true|false)/i)),acConnected:boolValue(deepFind(batteryJson,['externalconnected']))!==null?boolValue(deepFind(batteryJson,['externalconnected'])):boolValue(regexValue(batteryText,/"ExternalConnected"\s*=\s*(Yes|No|true|false)/i)),limitations:batteryPresent?limitationsFor(probes,['power','battery']):[]},
+    security:{status:groupStatus([mdm,ade,fileVault !== 'UNKNOWN'?true:null,sip !== 'UNKNOWN'?true:null,activationLock !== 'UNKNOWN'?true:null],false),mdmEnrolled:mdm,adeEnrolled:ade,fileVault:fileVault,sip:sip,activationLock:activationLock,limitations:limitationsFor(probes,['profiles','filevault','sip','hardware'])},
+    storage:{status:groupStatus([bootVolume,totalBytes,smartStatus],false),bootVolume:bootVolume?String(bootVolume):null,deviceIdentifier:deviceIdentifier?String(deviceIdentifier):null,fileSystem:fileSystem?String(fileSystem):null,totalBytes:totalBytes,freeBytes:freeBytes,smartStatus:smartStatus?String(smartStatus):null,solidState:solidState,nvmeCount:nvmeCount,limitations:limitationsFor(probes,['storage','nvme','diskutil','df'])},
+    network:{status:groupStatus([wifiController,bluetoothController],false),wifiController:wifiController,wifiPower:wifiPower,wifiConnected:wifiConnected,bluetoothController:bluetoothController,bluetoothPower:bluetoothPower,limitations:limitationsFor(probes,['wifi','wifi-power','bluetooth'])},
+    peripherals:{status:groupStatus([(probes.usb.status==='OK'||probes.thunderbolt.status==='OK'||probes.displays.status==='OK'||probes.audio.status==='OK'||probes.camera.status==='OK')?true:null],false),usbCount:countItems(json('usb'),'SPUSBDataType'),thunderboltCount:countItems(json('thunderbolt'),'SPThunderboltDataType'),displayCount:countItems(json('displays'),'SPDisplaysDataType'),audioCount:countItems(json('audio'),'SPAudioDataType'),cameraCount:countItems(json('camera'),'SPCameraDataType'),limitations:limitationsFor(probes,['usb','thunderbolt','displays','audio','camera'])},
+    limitations: failed ? ['collection.partial'] : []
+  };
+  writeJSON(dir + '/facts.json', facts);
+  return dir + '/facts.json';
+}

@@ -1,0 +1,317 @@
+{
+  "schemaVersion": "2.1",
+  "metadataOverrides": [
+    {
+      "id": "macbook-air-13-m5",
+      "modelIdentifiers": ["Mac17,3"],
+      "introducedYear": 2026,
+      "modelYearLabel": "2026",
+      "marketingNames": {
+        "zh-CN": "MacBook Air（13 英寸，M5）",
+        "en-US": "MacBook Air (13-inch, M5)"
+      }
+    }
+  ],
+  "profiles": [
+    {
+      "id": "macbook-air-m2-or-newer",
+      "confidence": "HIGH",
+      "match": {"family": "macbook-air", "architecture": "APPLE_SILICON", "chipPattern": "^Apple M[2-5]\\b"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": true,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": true,
+        "usbCPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true,
+        "portLayout": [
+          {"id": "magsafe", "type": "magsafe", "side": "left", "position": "rear"},
+          {"id": "usbc1", "type": "usbc", "index": 1, "side": "left", "position": "middle"},
+          {"id": "usbc2", "type": "usbc", "index": 2, "side": "left", "position": "front"},
+          {"id": "headphone", "type": "headphone", "side": "right", "position": "front"}
+        ]
+      }
+    },
+    {
+      "id": "macbook-air-m1",
+      "confidence": "HIGH",
+      "match": {"family": "macbook-air", "architecture": "APPLE_SILICON", "chipPattern": "^Apple M1$"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": true,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true,
+        "portLayout": [
+          {"id": "usbc1", "type": "usbc", "index": 1, "side": "left", "position": "rear"},
+          {"id": "usbc2", "type": "usbc", "index": 2, "side": "left", "position": "front"},
+          {"id": "headphone", "type": "headphone", "side": "right", "position": "front"}
+        ]
+      }
+    },
+    {
+      "id": "macbook-air-intel-usbc",
+      "confidence": "HIGH",
+      "match": {"modelIdentifierPattern": "^MacBookAir(?:8,[12]|9,1)$"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": true,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-air-2011-2017",
+      "confidence": "MEDIUM",
+      "match": {"modelIdentifierPattern": "^MacBookAir[4-7],"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": false,
+        "hasHeadphoneJack": true, "hasMagSafe": true, "usbAPortCount": 2, "thunderboltPortCount": 1,
+        "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+      }
+    },
+    {
+      "id": "macbook-air-legacy",
+      "confidence": "MEDIUM",
+      "match": {"family": "macbook-air"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": false,
+        "hasHeadphoneJack": true, "hasMagSafe": true,
+        "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+      }
+    },
+    {
+      "id": "macbook-pro-m3-base",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["Mac15,3"]},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": true,
+        "hasHDMI": true, "hasSDCard": true, "hasHeadphoneJack": true, "hasMagSafe": true,
+        "usbCPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-pro-13-apple-silicon",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["MacBookPro17,1", "Mac14,7"]},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": true,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-pro-apple-silicon-modern",
+      "confidence": "HIGH",
+      "match": {"family": "macbook-pro", "architecture": "APPLE_SILICON", "chipPattern": "^Apple M[1-5]\\b"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": true,
+        "hasHDMI": true, "hasSDCard": true, "hasHeadphoneJack": true, "hasMagSafe": true,
+        "usbCPortCount": 3, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-pro-intel-usbc-two-no-touchid",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["MacBookPro13,1", "MacBookPro14,1"]},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": false,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-pro-intel-usbc-two-touchid",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["MacBookPro15,4", "MacBookPro16,3"]},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": true,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-pro-intel-usbc-four",
+      "confidence": "MEDIUM",
+      "match": {"modelIdentifierPattern": "^MacBookPro1[3-6],"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": true,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 4, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-pro-retina",
+      "confidence": "HIGH",
+      "match": {"modelIdentifierPattern": "^MacBookPro1[0-2],"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": false,
+        "hasHDMI": true, "hasSDCard": true, "hasHeadphoneJack": true, "hasMagSafe": true,
+        "usbAPortCount": 2, "thunderboltPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12,
+        "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-pro-legacy",
+      "confidence": "LOW",
+      "match": {"family": "macbook-pro"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": false,
+        "hasHeadphoneJack": true,
+        "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+      }
+    },
+    {
+      "id": "macbook-12-inch",
+      "confidence": "HIGH",
+      "match": {"modelIdentifierPattern": "^MacBook(?:8,1|9,1|10,1)$"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": false,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 1, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "macbook-family",
+      "confidence": "LOW",
+      "match": {"family": "macbook"},
+      "capabilities": {
+        "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": null,
+        "hasHeadphoneJack": true, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+      }
+    },
+    {
+      "id": "mac-mini-2024-or-newer",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["Mac16,10", "Mac16,11"]},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHDMI": true, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 5, "ethernetPortCount": 1, "keyboardLayout": "ANSI", "functionKeyCount": 12,
+        "portProfileComplete": true
+      }
+    },
+    {
+      "id": "mac-mini-apple-silicon-classic",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["Macmini9,1", "Mac14,3"]},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHDMI": true, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 2, "usbAPortCount": 2, "ethernetPortCount": 1, "keyboardLayout": "ANSI",
+        "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "mac-mini-m2-pro-or-intel-2018",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["Mac14,12", "Macmini8,1"]},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHDMI": true, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 4, "usbAPortCount": 2, "ethernetPortCount": 1, "keyboardLayout": "ANSI",
+        "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "mac-mini-family",
+      "confidence": "LOW",
+      "match": {"family": "mac-mini"},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHeadphoneJack": true, "ethernetPortCount": 1,
+        "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+      }
+    },
+    {
+      "id": "imac-apple-silicon",
+      "confidence": "MEDIUM",
+      "match": {"family": "imac", "architecture": "APPLE_SILICON", "chipPattern": "^Apple M[1-5]\\b"},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHDMI": false, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+      }
+    },
+    {
+      "id": "imac-intel-thunderbolt3",
+      "confidence": "MEDIUM",
+      "match": {"modelIdentifierPattern": "^(?:iMacPro1,1|iMac(?:18|19|20|21),)"},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHDMI": false, "hasSDCard": true, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 2, "usbAPortCount": 4, "ethernetPortCount": 1, "keyboardLayout": "ANSI",
+        "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "imac-family",
+      "confidence": "LOW",
+      "match": {"family": "imac"},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHeadphoneJack": true, "ethernetPortCount": 1,
+        "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+      }
+    },
+    {
+      "id": "mac-studio-family",
+      "confidence": "HIGH",
+      "match": {"family": "mac-studio", "architecture": "APPLE_SILICON", "chipPattern": "^Apple M[1-5]\\b"},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHDMI": true, "hasSDCard": true, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 6, "usbAPortCount": 2, "ethernetPortCount": 1, "keyboardLayout": "ANSI",
+        "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "mac-pro-2023",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["Mac14,8"]},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHDMI": true, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "usbCPortCount": 8, "usbAPortCount": 2, "ethernetPortCount": 2, "keyboardLayout": "ANSI",
+        "functionKeyCount": 12, "portProfileComplete": false
+      }
+    },
+    {
+      "id": "mac-pro-2019",
+      "confidence": "MEDIUM",
+      "match": {"modelIdentifiers": ["MacPro7,1"]},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false, "usbCPortCount": 4,
+        "usbAPortCount": 2, "ethernetPortCount": 2, "keyboardLayout": "ANSI", "functionKeyCount": 12,
+        "portProfileComplete": false
+      }
+    },
+    {
+      "id": "mac-pro-2013",
+      "confidence": "HIGH",
+      "match": {"modelIdentifiers": ["MacPro6,1"]},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "hasHDMI": true, "hasSDCard": false, "hasHeadphoneJack": true, "hasMagSafe": false,
+        "thunderboltPortCount": 6, "usbAPortCount": 4, "ethernetPortCount": 2, "keyboardLayout": "ANSI",
+        "functionKeyCount": 12, "portProfileComplete": true
+      }
+    },
+    {
+      "id": "mac-pro-family",
+      "confidence": "LOW",
+      "match": {"family": "mac-pro"},
+      "capabilities": {
+        "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+        "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+      }
+    }
+  ],
+  "fallbacks": {
+    "notebook": {
+      "hasBattery": true, "hasBuiltInKeyboard": true, "hasTrackpad": true, "hasTouchID": null,
+      "hasHDMI": null, "hasSDCard": null, "hasHeadphoneJack": null, "hasMagSafe": null,
+      "usbCPortCount": null, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+    },
+    "desktop": {
+      "hasBattery": false, "hasBuiltInKeyboard": false, "hasTrackpad": false, "hasTouchID": false,
+      "hasHDMI": null, "hasSDCard": null, "hasHeadphoneJack": null, "hasMagSafe": false,
+      "usbCPortCount": null, "keyboardLayout": "ANSI", "functionKeyCount": 12, "portProfileComplete": false
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mac-check.local/v2/result.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "evaluatedAt", "checks", "summary"],
+  "properties": {
+    "schemaVersion": { "const": "2.0" },
+    "evaluatedAt": { "type": "string", "format": "date-time" },
+    "checks": { "type": "array", "items": { "$ref": "#/$defs/check" }, "minItems": 1 },
+    "summary": { "$ref": "#/$defs/summary" }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "required": ["id", "group", "titleKey", "status", "severity", "evidence", "confidence", "observedValue", "displayValue", "summaryKey", "limitations", "checkedAt"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9.-]+$" },
+        "group": { "enum": ["device", "battery", "security", "storage", "network", "peripherals", "keyboard", "display", "audio", "microphone", "camera", "touchid", "trackpad", "ports"] },
+        "titleKey": { "type": "string" },
+        "status": { "$ref": "#/$defs/status" },
+        "severity": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+        "evidence": { "enum": ["SYSTEM_READ", "GUIDED_INTERACTION", "OFFICIAL_USER_PROOF", "THIRD_PARTY_QUERY"] },
+        "confidence": { "enum": ["HIGH", "MEDIUM", "LOW", "CONFLICTED"] },
+        "observedValue": { "type": "object" },
+        "displayValue": { "type": "string" },
+        "summaryKey": { "type": "string" },
+        "limitations": { "type": "array", "items": { "type": "string" } },
+        "checkedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "required": ["applicable", "executed", "passed", "notice", "warning", "blocker", "unknown", "unsupported", "skipped", "notStarted"],
+      "properties": {
+        "applicable": { "type": "integer", "minimum": 0 },
+        "executed": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "notice": { "type": "integer", "minimum": 0 },
+        "warning": { "type": "integer", "minimum": 0 },
+        "blocker": { "type": "integer", "minimum": 0 },
+        "unknown": { "type": "integer", "minimum": 0 },
+        "unsupported": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "notStarted": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "status": { "enum": ["PASS", "NOTICE", "WARNING", "BLOCKER", "UNKNOWN", "UNSUPPORTED", "SKIPPED", "NOT_STARTED", "RUNNING"] }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,57 @@
+ObjC.import('Foundation');
+function text(path){var d=$.NSData.dataWithContentsOfFile(path);if(!d)throw new Error('Missing '+path);return ObjC.unwrap($.NSString.alloc.initWithDataEncoding(d,$.NSUTF8StringEncoding));}
+function json(path){return JSON.parse(text(path));}
+function write(path,value){var ok=$(value).writeToFileAtomicallyEncodingError(path,true,$.NSUTF8StringEncoding,null);if(!ok)throw new Error('Unable to write '+path);}
+function merge(base,extra){var out={},k;for(k in base)out[k]=base[k];for(k in extra)out[k]=extra[k];return out;}
+function safeTest(pattern,value){try{return(new RegExp(pattern,'i')).test(value||'');}catch(_){return false;}}
+function deviceFamily(device,battery){
+  var name=(device.modelName||'').toLowerCase(),id=(device.modelIdentifier||'').toLowerCase();
+  if(/macbook air/.test(name)||/^macbookair/.test(id))return'macbook-air';
+  if(/macbook pro/.test(name)||/^macbookpro/.test(id))return'macbook-pro';
+  if(/^macbook(?:\s|$)/.test(name)||/^macbook\d/.test(id))return'macbook';
+  if(/mac studio/.test(name))return'mac-studio';
+  if(/mac mini/.test(name)||/^macmini/.test(id))return'mac-mini';
+  if(/imac pro/.test(name)||/^imacpro/.test(id))return'imac';
+  if(/^imac/.test(name)||/^imac/.test(id))return'imac';
+  if(/mac pro/.test(name)||/^macpro/.test(id))return'mac-pro';
+  return battery.supported===true?'notebook':'desktop';
+}
+function profileMatches(profile,device,family){
+  var m=profile.match||{},identifier=device.modelIdentifier||'',name=device.modelName||'',chip=device.chip||'';
+  if(m.family&&m.family!==family)return false;
+  if(m.architecture&&m.architecture!==device.architecture)return false;
+  if(m.modelIdentifiers&&m.modelIdentifiers.indexOf(identifier)<0)return false;
+  if(m.modelIdentifierPattern&&!safeTest(m.modelIdentifierPattern,identifier))return false;
+  if(m.modelNamePattern&&!safeTest(m.modelNamePattern,name))return false;
+  if(m.chipPattern&&!safeTest(m.chipPattern,chip))return false;
+  return true;
+}
+function capabilities(db,device,battery,locale){
+  var family=deviceFamily(device,battery),selected=null,model=null,models=db.metadataOverrides||[],profiles=db.profiles||[];
+  for(var i=0;i<models.length;i++)if(models[i].modelIdentifiers&&models[i].modelIdentifiers.indexOf(device.modelIdentifier)>=0){model=models[i];break;}
+  for(var j=0;j<profiles.length;j++)if(profileMatches(profiles[j],device,family)){selected=profiles[j];break;}
+  var fallback=db.fallbacks[family==='notebook'||/^macbook/.test(family)?'notebook':'desktop'],base=merge(fallback||{},selected?selected.capabilities:{});
+  return merge(base,{
+    profileId:selected?selected.id:'fallback-'+(family==='notebook'||/^macbook/.test(family)?'notebook':'desktop'),
+    modelProfileId:model?model.id:null,
+    family:family,
+    confidence:selected?(selected.confidence||'MEDIUM'):'LOW',
+    introducedYear:model&&model.introducedYear!==undefined?model.introducedYear:null,
+    modelYearLabel:model&&model.modelYearLabel?model.modelYearLabel:null,
+    marketingName:model&&model.marketingNames?(model.marketingNames[locale]||model.marketingNames['en-US']||device.modelName):device.modelName
+  });
+}
+function safeJSON(value){return JSON.stringify(value).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');}
+function run(argv){
+  if(argv.length<2)throw new Error('usage: build-session.jxa <session-dir> <skill-root>');
+  var dir=argv[0],root=argv[1],session=json(dir+'/session.json'),facts=json(dir+'/facts.json'),results=json(dir+'/system-results.json'),runtime=json(dir+'/runtime.json');
+  var checks=json(root+'/assets/data/checks.json'),db=json(root+'/assets/data/device-capabilities.json'),layouts=json(root+'/assets/data/keyboard-layouts.json'),caps=capabilities(db,facts.device,facts.battery,session.locale);
+  var plan=checks.hardware.map(function(item){var applicable=item.capability===null?null:caps[item.capability];return{id:item.id,titleKey:item.titleKey,applicable:applicable,initialStatus:applicable===false?'UNSUPPORTED':'NOT_STARTED'};});
+  session.status='SYSTEM_READY';session.runtime={host:'Local macOS host',hostOS:runtime.platform||'macOS',mode:'DIRECT_HOST_EXEC'};session.device=facts.device;session.capabilities=caps;session.systemResults=results.checks;session.interactivePlan=plan;
+  write(dir+'/session.json',JSON.stringify(session,null,2)+'\n');
+  var strings=json(root+'/assets/i18n/'+session.locale+'.json'),layoutName=caps.keyboardLayout&&layouts[caps.keyboardLayout]?caps.keyboardLayout:'ANSI';
+  var payload={session:session,facts:{device:facts.device,battery:facts.battery,security:facts.security,storage:facts.storage,network:facts.network,peripherals:facts.peripherals},system:results,capabilities:caps,checks:checks,keyboardLayout:{name:layoutName,rows:layouts[layoutName],labels:layouts.labels},keyboardLayouts:{ANSI:layouts.ANSI,ISO:layouts.ISO,JIS:layouts.JIS,labels:layouts.labels},strings:strings};
+  var nonce=$.NSUUID.UUID.UUIDString.js.replace(/-/g,''),html=text(root+'/assets/session-template.html');
+  html=html.replace(/__LANG__/g,session.locale).replace(/__NONCE__/g,nonce).replace('/*__STYLE__*/',text(root+'/assets/session.css')).replace('/*__APP_DATA__*/',safeJSON(payload)).replace('/*__SCRIPT__*/',text(root+'/assets/session.js'));
+  var output=dir+'/MacCheck-'+session.sessionId+'.html';write(output,html);return output;
+}

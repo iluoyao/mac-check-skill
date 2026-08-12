@@ -1,0 +1,4 @@
+interface:
+  display_name: "MacCheck Mac验机助手"
+  short_description: "自动检测当前 Mac，并在本地页面完成硬件检测与报告下载"
+  default_prompt: "使用 $mac-check-skill 为当前 Mac 创建一次完整检查，完成系统扫描并打开本地检测页面。"

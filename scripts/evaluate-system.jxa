@@ -1,0 +1,32 @@
+ObjC.import('Foundation');
+function readJSON(path){var d=$.NSData.dataWithContentsOfFile(path);if(!d)return null;return JSON.parse(ObjC.unwrap($.NSString.alloc.initWithDataEncoding(d,$.NSUTF8StringEncoding)));}
+function writeJSON(path,v){var ok=$(JSON.stringify(v,null,2)+'\n').writeToFileAtomicallyEncodingError(path,true,$.NSUTF8StringEncoding,null);if(!ok)throw new Error('write failed');}
+function check(id,group,status,severity,confidence,value,display,summary,limits){return{id:id,group:group,titleKey:'check.'+id+'.title',status:status,severity:severity,evidence:'SYSTEM_READ',confidence:confidence,observedValue:value||{},displayValue:display||'',summaryKey:summary||('check.'+id+'.'+status.toLowerCase()),limitations:limits||[],checkedAt:new Date().toISOString()};}
+function unknown(id,group,limits){return check(id,group,'UNKNOWN','MEDIUM','LOW',{},'',null,limits||['evidence.unavailable']);}
+function summary(checks){var s={applicable:checks.length,executed:0,passed:0,notice:0,warning:0,blocker:0,unknown:0,unsupported:0,skipped:0,notStarted:0};var map={PASS:'passed',NOTICE:'notice',WARNING:'warning',BLOCKER:'blocker',UNKNOWN:'unknown',UNSUPPORTED:'unsupported',SKIPPED:'skipped',NOT_STARTED:'notStarted'};for(var i=0;i<checks.length;i++){if(map[checks[i].status])s[map[checks[i].status]]++;if(['PASS','NOTICE','WARNING','BLOCKER','UNKNOWN'].indexOf(checks[i].status)>=0)s.executed++;}return s;}
+function run(argv){
+  var dir=argv[0];if(!dir)throw new Error('session directory required');var f=readJSON(dir+'/facts.json');if(!f)throw new Error('facts.json unavailable');var c=[];
+  if(!f.device.modelName&&!f.device.modelIdentifier)c.push(unknown('device.identity','device',f.device.limitations));
+  else c.push(check('device.identity','device',f.device.modelIdentifier?'PASS':'NOTICE','LOW',f.device.modelIdentifier?'HIGH':'MEDIUM',{modelIdentifier:f.device.modelIdentifier,architecture:f.device.architecture},[f.device.modelName,f.device.modelIdentifier].filter(Boolean).join(' · ')));
+  if(f.device.serialConsistency==='MISMATCH')c.push(check('device.serial-consistency','device','BLOCKER','CRITICAL','CONFLICTED',{sources:f.device.serialSourcesAvailable},f.device.serialMasked));
+  else if(f.device.serialConsistency==='UNKNOWN')c.push(unknown('device.serial-consistency','device',f.device.limitations));
+  else c.push(check('device.serial-consistency','device',f.device.serialConsistency==='SINGLE_SOURCE'?'NOTICE':'PASS','MEDIUM',f.device.serialConsistency==='MATCH'?'HIGH':'MEDIUM',{sources:f.device.serialSourcesAvailable},f.device.serialMasked));
+  if(f.battery.status==='UNSUPPORTED')c.push(check('battery.presence','battery','UNSUPPORTED','LOW','HIGH',{},''));
+  else if(f.battery.status==='UNKNOWN')c.push(unknown('battery.health','battery',f.battery.limitations));
+  else {
+    var ratio=f.battery.capacityRatio, status=ratio===null?'UNKNOWN':(ratio<0.8?'WARNING':(ratio<0.9?'NOTICE':'PASS'));
+    c.push(check('battery.health','battery',status,status==='WARNING'?'HIGH':'MEDIUM',ratio===null?'LOW':'HIGH',{cycleCount:f.battery.cycleCount,capacityRatio:ratio},ratio===null?'':Math.round(ratio*100)+'%',null,f.battery.limitations));
+  }
+  if(f.security.mdmEnrolled===null&&f.security.adeEnrolled===null)c.push(unknown('security.management','security',f.security.limitations));
+  else c.push(check('security.management','security',(f.security.mdmEnrolled||f.security.adeEnrolled)?'BLOCKER':'PASS','CRITICAL','HIGH',{mdmEnrolled:f.security.mdmEnrolled,adeEnrolled:f.security.adeEnrolled},(f.security.mdmEnrolled||f.security.adeEnrolled)?'Managed':'Not enrolled'));
+  c.push(f.security.activationLock==='UNKNOWN'?unknown('security.activation-lock','security',f.security.limitations):check('security.activation-lock','security',f.security.activationLock==='ENABLED'?'BLOCKER':'PASS','CRITICAL','HIGH',{state:f.security.activationLock},f.security.activationLock));
+  c.push(f.security.fileVault==='UNKNOWN'?unknown('security.filevault','security',f.security.limitations):check('security.filevault','security',f.security.fileVault==='ENABLED'?'PASS':'NOTICE','MEDIUM','HIGH',{state:f.security.fileVault},f.security.fileVault));
+  c.push(f.security.sip==='UNKNOWN'?unknown('security.sip','security',f.security.limitations):check('security.sip','security',f.security.sip==='ENABLED'?'PASS':'WARNING','HIGH','HIGH',{state:f.security.sip},f.security.sip));
+  c.push(f.storage.totalBytes===null?unknown('storage.capacity','storage',f.storage.limitations):check('storage.capacity','storage','PASS','LOW','HIGH',{totalBytes:f.storage.totalBytes,freeBytes:f.storage.freeBytes},Math.round(f.storage.totalBytes/1073741824)+' GB'));
+  if(f.storage.smartStatus===null)c.push(unknown('storage.health','storage',f.storage.limitations));
+  else {var smart=String(f.storage.smartStatus).toLowerCase(),smartUnavailable=/not supported|unsupported|unknown|n\/a/.test(smart);c.push(smartUnavailable?unknown('storage.health','storage',f.storage.limitations.concat(['storage.smart-unavailable'])):check('storage.health','storage',/verified|passing|ok/.test(smart)?'PASS':'WARNING','HIGH','HIGH',{smartStatus:f.storage.smartStatus},f.storage.smartStatus));}
+  c.push(f.network.wifiController===null||f.network.wifiPower==='UNKNOWN'?unknown('network.wifi','network',f.network.limitations):check('network.wifi','network',f.network.wifiPower==='ON'?'PASS':'NOTICE','LOW','MEDIUM',{controller:f.network.wifiController,power:f.network.wifiPower,connected:f.network.wifiConnected},f.network.wifiPower));
+  c.push(f.network.bluetoothController===null||f.network.bluetoothPower==='UNKNOWN'?unknown('network.bluetooth','network',f.network.limitations):check('network.bluetooth','network',f.network.bluetoothPower==='ON'?'PASS':'NOTICE','LOW','MEDIUM',{controller:f.network.bluetoothController,power:f.network.bluetoothPower},f.network.bluetoothPower));
+  c.push(check('peripherals.inventory','peripherals',f.peripherals.status==='UNKNOWN'?'UNKNOWN':'PASS','LOW',f.peripherals.status==='UNKNOWN'?'LOW':'MEDIUM',{usbCount:f.peripherals.usbCount,thunderboltCount:f.peripherals.thunderboltCount,displayCount:f.peripherals.displayCount,audioCount:f.peripherals.audioCount,cameraCount:f.peripherals.cameraCount},'',null,f.peripherals.limitations.concat(['peripherals.enumeration-not-port-proof'])));
+  var out={schemaVersion:'2.0',evaluatedAt:new Date().toISOString(),checks:c,summary:summary(c)};writeJSON(dir+'/system-results.json',out);return dir+'/system-results.json';
+}

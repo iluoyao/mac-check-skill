@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mac-check.local/v2/report.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "locale", "device", "summary", "attention", "systemChecks", "hardwareChecks", "limitations"],
+  "properties": {
+    "schemaVersion": { "const": "2.0" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "locale": { "enum": ["zh-CN", "en-US"] },
+    "device": { "type": "object" },
+    "summary": { "$ref": "result.schema.json#/$defs/summary" },
+    "attention": { "type": "array", "items": { "$ref": "result.schema.json#/$defs/check" } },
+    "systemChecks": { "type": "array", "items": { "$ref": "result.schema.json#/$defs/check" } },
+    "hardwareChecks": { "type": "array", "items": { "$ref": "result.schema.json#/$defs/check" } },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

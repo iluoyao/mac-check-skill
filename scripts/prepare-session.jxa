@@ -1,0 +1,30 @@
+ObjC.import('Foundation');
+
+function fail(message) { throw new Error(message); }
+function writeJSON(path, value) {
+  var text = JSON.stringify(value, null, 2) + '\n';
+  var ok = $(text).writeToFileAtomicallyEncodingError(path, true, $.NSUTF8StringEncoding, null);
+  if (!ok) fail('Unable to write ' + path);
+}
+function run(argv) {
+  if (argv.length < 1) fail('output root required');
+  var fm = $.NSFileManager.defaultManager;
+  var root = $(argv[0]).stringByStandardizingPath.js;
+  var locale = argv[1] || 'zh-CN';
+  if (locale !== 'zh-CN' && locale !== 'en-US') fail('unsupported locale: ' + locale);
+  fm.createDirectoryAtPathWithIntermediateDirectoriesAttributesError(root, true, $(), null);
+  var now = new Date();
+  function pad(n) { return String(n).padStart(2, '0'); }
+  var stamp = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+  var suffix = Math.random().toString(16).slice(2, 6).toUpperCase().padEnd(4, '0');
+  var id = stamp + '-' + suffix;
+  var dir = root + '/' + id;
+  fm.createDirectoryAtPathWithIntermediateDirectoriesAttributesError(dir + '/raw', true, $(), null);
+  var session = {
+    schemaVersion: '2.0', sessionId: id, createdAt: now.toISOString(), status: 'SYSTEM_COLLECTING', locale: locale,
+    skillVersion: '2.0.0', runtime: {host:'Local macOS host',hostOS:'macOS',mode:'DIRECT_HOST_EXEC'},
+    device: null, capabilities: {}, systemResults: [], interactivePlan: [], featureFlags: { riskChecks: false }
+  };
+  writeJSON(dir + '/session.json', session);
+  return dir;
+}

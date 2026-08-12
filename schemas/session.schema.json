@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mac-check.local/v2/session.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "sessionId", "createdAt", "status", "locale", "skillVersion", "runtime", "device", "capabilities", "systemResults", "interactivePlan", "featureFlags"],
+  "properties": {
+    "schemaVersion": { "const": "2.0" },
+    "sessionId": { "type": "string", "pattern": "^[0-9]{8}-[0-9]{6}-[A-F0-9]{4}$" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "status": { "enum": ["SYSTEM_COLLECTING", "SYSTEM_READY", "INTERACTIVE_IN_PROGRESS", "READY_TO_REPORT", "COMPLETED", "ABANDONED"] },
+    "locale": { "enum": ["zh-CN", "en-US"] },
+    "skillVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "runtime": {
+      "type": "object",
+      "required": ["host", "hostOS", "mode"],
+      "properties": {
+        "host": { "type": "string" },
+        "hostOS": { "type": "string" },
+        "mode": { "enum": ["DIRECT_HOST_EXEC"] }
+      },
+      "additionalProperties": false
+    },
+    "device": { "type": ["object", "null"] },
+    "capabilities": { "type": "object" },
+    "systemResults": { "type": "array", "items": { "$ref": "result.schema.json#/$defs/check" } },
+    "interactivePlan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "titleKey", "applicable", "initialStatus"],
+        "properties": {
+          "id": { "enum": ["keyboard", "display", "audio", "microphone", "camera", "touchid", "trackpad", "ports"] },
+          "titleKey": { "type": "string" },
+          "applicable": { "type": ["boolean", "null"] },
+          "initialStatus": { "enum": ["NOT_STARTED", "UNSUPPORTED"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "featureFlags": {
+      "type": "object",
+      "required": ["riskChecks"],
+      "properties": { "riskChecks": { "const": false } },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

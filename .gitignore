@@ -1,0 +1,46 @@
+# macOS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editor and local agent state
+.idea/
+.vscode/
+.agents/
+.codex/
+/tests/
+*.swp
+*.swo
+*~
+
+# Runtime sessions and generated reports
+mac-check-output/
+**/mac-check-output/
+# Never commit captured probe output. Test inputs live in synthetic-probes/.
+**/raw/
+/runtime.json
+/facts.json
+/system-results.json
+/session.json
+MacCheck-*.html
+Mac验机报告-*
+Mac-Inspection-Report-*
+
+# Logs, temporary files, and language caches
+*.log
+*.tmp
+*.temp
+.cache/
+node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+coverage/
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+docs/
